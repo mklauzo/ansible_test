@@ -1,0 +1,53 @@
+---
+- name: sudo and nginx instalation and deploy application
+  hosts: webservers
+  tasks:
+   - name: sudo installation
+     apk: name=sudo state=present
+   - name: nginx installation
+     apk: name=nginx state=latest
+     become: yes
+#   - name: start nginx
+#     service:
+#      name: nginx
+#      state: started
+#     become: yes
+   - name: create dirs
+     file:
+      path: "{{ item }}"
+      state: directory
+     with_items:
+       - '/home/mac/alpine_nginx.com'
+       - '/etc/nginx/sites-available'
+       - '/etc/nginx/sites-enabled'
+     become: yes
+   - name: copy index.html
+     copy:
+      src: /etc/ansible/playbooks/index.html
+      dest: /home/mac/alpine_nginx.com/index.html
+   - name: copy nginx alpine_nginx.conf !!! files
+     copy:
+      src: /etc/ansible/playbooks/alpine_nginx.conf
+      dest: /etc/nginx/sites-available/alpine_nginx.conf
+     become: yes
+   - name: copy nginx.conf !!! files
+     copy:
+      src: /etc/ansible/playbooks/nginx.conf
+      dest: /etc/nginx/nginx.conf
+     become: yes
+   - name: create the symlink
+     file:
+      src: /etc/nginx/sites-available/alpine_nginx.conf
+      dest: /etc/nginx/sites-enabled/alpine_nginx.conf
+      state: link
+     become: yes
+#   - name: edit /etc/nginx/nginx.conf
+#     lineinfile:
+#       path: /etc/nginx/nginx.conf
+#       line: include /etc/nginx/sites-available/*.conf;
+#       create: yes
+   - name: restart nginx
+     service:
+      name: nginx
+      state: restarted
+     become: yes
